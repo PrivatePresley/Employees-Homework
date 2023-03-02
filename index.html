@@ -18,18 +18,8 @@
       <button type="submit">Add</button>
     </form>
 
-    <form class="edit-form" validation>
-      <label for="name">Name</label>
-      <input type="text" name="name" id="name" required />
-
-      <label for="salary">Salary</label>
-      <input type="number" name="salary" id="salary" required />
-
-      <button type="submit">Edit</button>
-    </form>
-
     <script>
-      // add employee
+      // add employee selector, event listener, function
       const addForm = document.querySelector(".add-form");
 
       addForm.addEventListener("submit", (e) => {
@@ -55,6 +45,7 @@
           .then((json) => console.log("response", json));
       }
 
+      //delete employee function
       function deleteEmployee(id) {
         fetch(`http://localhost:3000/employees/${id}`, {
           method: "DELETE",
@@ -63,18 +54,37 @@
           .then((json) => console.log("response", json));
       }
 
-      // fetch and show employees, create checkbox HTML
+      function editEmployee(id, idname, value) {
+        let varBody = {};
+        varBody[idname] = value;
+
+        fetch(`http://localhost:3000/employees/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(varBody),
+        })
+          .then((response) => response.json())
+          .then((json) => console.log("response", json));
+      }
+
+      // fetch and show employees, create list of employees
+      // check for delete or edit events
       function showEmployees(employees) {
         employees.map((employee) => {
           const li = document.createElement("li");
-          li.innerHTML = `${employee.name} - $${employee.salary}
+          li.innerHTML = `
+          <input type="text" id="${employee.id}" name="name" value="${employee.name}">
+          $<input type="number" id="${employee.id}" name="salary" value="${employee.salary}">
           <input type="checkbox" id="${employee.id}" name="delete" unchecked>
             <label for="delete">Delete</label>`;
           document.querySelector("ul").appendChild(li);
         });
 
+        //Checking for delete events
         const deleteCheckboxes = document.querySelectorAll(
-          "input[type='checkbox']"
+          "input[type='checkbox'][name='delete']"
         );
         // If Delete checkbox is checked
         deleteCheckboxes.forEach((check) =>
@@ -82,8 +92,22 @@
             deleteEmployee(e.target.id);
           })
         );
+
+        //Checking for edit events
+        const employeeInputs = document.querySelectorAll(
+          "li:not(input[type='checkbox'])"
+        );
+
+        employeeInputs.forEach((check) =>
+          check.addEventListener("change", (e) => {
+            console.log(`Value: ${e.target.value}`);
+            console.log(`Name: ${e.target.name}`);
+            editEmployee(e.target.id, e.target.name, e.target.value);
+          })
+        );
       }
 
+      //Get employees and run show
       function getEmployees() {
         fetch("http://localhost:3000/employees/")
           .then((response) => response.json())
